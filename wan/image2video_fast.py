@@ -279,6 +279,7 @@ class WanI2VFast:
                 crossattn_cache=warmup_cross_kv,
                 current_start=0,
                 max_attention_size=kv_size,
+                frame_seqlen=frame_seqlen,
             )
 
         if dist.is_initialized():
@@ -609,7 +610,8 @@ class WanI2VFast:
                     'kv_cache': self_kv_cache,
                     'crossattn_cache': cross_kv_cache,
                     'current_start': chunk_id * chunk_size * frame_seqlen,
-                    'max_attention_size': kv_size if max_attention_size is None else max_attention_size
+                    'max_attention_size': kv_size if max_attention_size is None else max_attention_size,
+                    'frame_seqlen': frame_seqlen,
                 }
 
                 if offload_model:

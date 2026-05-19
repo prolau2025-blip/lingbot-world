@@ -85,14 +85,16 @@ class CausalWanSelfAttention(nn.Module):
         freqs,
         kv_cache=None,
         current_start=0,
-        max_attention_size=1_000_000
+        max_attention_size=1_000_000,
+        frame_seqlen=None,
     ):
         r"""
         Args:
             x(Tensor): Shape [B, L, num_heads, C / num_heads]
             grid_sizes(Tensor): Shape [B, 3], the second dimension contains (F, H, W)
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
-            block_mask (BlockMask)
+            frame_seqlen(int, optional): Pre-computed H*W/(patch_h*patch_w). If
+                provided, skips a `.item()` sync on `grid_sizes`.
         """
         b, s, n, d = *x.shape[:2], self.num_heads, self.head_dim
 
@@ -105,7 +107,8 @@ class CausalWanSelfAttention(nn.Module):
 
         q, k, v = qkv_fn(x)
 
-        frame_seqlen = math.prod(grid_sizes[0][1:]).item()
+        if frame_seqlen is None:
+            frame_seqlen = math.prod(grid_sizes[0][1:]).item()
         current_start_frame = current_start // frame_seqlen
         roped_query = causal_rope_apply(q, grid_sizes, freqs, start_frame=current_start_frame).type_as(v)
         roped_key = causal_rope_apply(k, grid_sizes, freqs, start_frame=current_start_frame).type_as(v)
@@ -246,7 +249,8 @@ class CausalWanAttentionBlock(nn.Module):
         kv_cache=None,
         crossattn_cache=None,
         current_start=0,
-        max_attention_size=1_000_000
+        max_attention_size=1_000_000,
+        frame_seqlen=None,
     ):
         r"""
         Args:
@@ -262,7 +266,8 @@ class CausalWanAttentionBlock(nn.Module):
         # self-attention
         y = self.self_attn(
             self.norm1(x).float() * (1 + e[1].squeeze(2)) + e[0].squeeze(2),
-            seq_lens, grid_sizes, freqs, kv_cache, current_start, max_attention_size)
+            seq_lens, grid_sizes, freqs, kv_cache, current_start, max_attention_size,
+            frame_seqlen=frame_seqlen)
         with torch.amp.autocast('cuda', dtype=torch.float32):
             x = x + y * e[2].squeeze(2)
 
@@ -468,7 +473,8 @@ class WanModelFast(ModelMixin, ConfigMixin):
         kv_cache=None,
         crossattn_cache=None,
         current_start=0,
-        max_attention_size=1_000_000
+        max_attention_size=1_000_000,
+        frame_seqlen=None,
     ):
         r"""
         Run the diffusion model with kv caching.
@@ -580,7 +586,8 @@ class WanModelFast(ModelMixin, ConfigMixin):
             context=context,
             context_lens=context_lens,
             dit_cond_dict=dit_cond_dict,
-            max_attention_size=max_attention_size)
+            max_attention_size=max_attention_size,
+            frame_seqlen=frame_seqlen)
 
         for block_index, block in enumerate(self.blocks):
             kwargs.update(

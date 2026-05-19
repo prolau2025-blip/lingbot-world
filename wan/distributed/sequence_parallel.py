@@ -258,6 +258,7 @@ def sp_dit_forward_causal(
     crossattn_cache=None,
     current_start=0,
     max_attention_size=1_000_000,
+    frame_seqlen=None,
 ):
     """
     x:                  A list of videos each with shape [C, T, H, W].
@@ -378,7 +379,8 @@ def sp_dit_forward_causal(
         context=context,
         context_lens=context_lens,
         dit_cond_dict=dit_cond_dict,
-        max_attention_size=max_attention_size)
+        max_attention_size=max_attention_size,
+        frame_seqlen=frame_seqlen)
 
     for block_index, block in enumerate(self.blocks):
         kwargs.update(
@@ -410,7 +412,8 @@ def sp_attn_forward_causal(
     freqs,
     kv_cache=None,
     current_start=0,
-    max_attention_size=1_000_000):
+    max_attention_size=1_000_000,
+    frame_seqlen=None):
     r"""
     Sequence-parallel causal self-attention using Ulysses all-to-all.
 
@@ -459,7 +462,8 @@ def sp_attn_forward_causal(
     padded_seq_lens = s * sp_size
     seq_lens_int = int(seq_lens)
 
-    frame_seqlen = math.prod(grid_sizes[0][1:]).item()
+    if frame_seqlen is None:
+        frame_seqlen = math.prod(grid_sizes[0][1:]).item()
     current_start_frame = current_start // frame_seqlen
 
     # Apply causal RoPE on full (padded) sequence with local heads
