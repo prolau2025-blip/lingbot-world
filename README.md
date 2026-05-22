@@ -27,6 +27,14 @@ as a top-tier world model, LingBot-World offers the following features.
 - **Long-Term Memory & Consistency**: It enables a minute-level horizon while preserving contextual consistency over time, which is also known as long-term memory. 
 - **Real-Time Interactivity & Open Access**: It supports real-time interactivity, achieving a latency of under 1 second when producing 16 frames per second. We provide public access to the code and model in an effort to narrow the divide between open-source and closed-source technologies. We believe our release will empower the community with practical applications across areas like content creation, gaming, and robot learning.
 
+## ⭐️ Online Demo
+
+We especially thank Reactor for providing an online LingBot-World demo. To try it online, please visit [https://www.reactor.inc/](https://www.reactor.inc/).
+
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/e9e93714-3309-4916-b8e6-f2a7a2162d32" width="100%" poster=""> </video>
+</div>
+
 ## 🎬 Video Demo
 <div align="center">
   <video src="https://github.com/user-attachments/assets/ea4a7a8d-5d9e-4ccf-96e7-02f93797116e" width="100%" poster=""> </video>
